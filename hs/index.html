@@ -1,0 +1,2466 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Интерактивная хронология истории человечества</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --dark-blue: #1a2a6c;
+            --crimson: #b21f1f;
+            --gold: #fdbb2d;
+        }
+
+        body {
+            background: var(--primary-gradient);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Анимированный фон */
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .bg-particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 15s infinite linear;
+        }
+
+        .bg-particle:nth-child(1) { width: 80px; height: 80px; top: 10%; left: 5%; animation-delay: 0s; }
+        .bg-particle:nth-child(2) { width: 120px; height: 120px; top: 20%; right: 10%; animation-delay: -3s; }
+        .bg-particle:nth-child(3) { width: 60px; height: 60px; bottom: 30%; left: 15%; animation-delay: -6s; }
+        .bg-particle:nth-child(4) { width: 100px; height: 100px; bottom: 20%; right: 20%; animation-delay: -9s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+            50% { transform: translateY(-20px) rotate(180deg) scale(1.1); }
+        }
+
+        /* Декоративные элементы */
+        .decoration {
+            position: fixed;
+            font-size: 2rem;
+            opacity: 0.1;
+            z-index: -1;
+            animation: drift 25s infinite linear;
+        }
+
+        .decoration:nth-child(1) { top: 15%; left: 8%; animation-delay: 0s; }
+        .decoration:nth-child(2) { top: 25%; right: 12%; animation-delay: -8s; }
+        .decoration:nth-child(3) { bottom: 35%; left: 18%; animation-delay: -16s; }
+        .decoration:nth-child(4) { bottom: 25%; right: 25%; animation-delay: -24s; }
+
+        @keyframes drift {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(20px, -15px) rotate(90deg); }
+            50% { transform: translate(0, -30px) rotate(180deg); }
+            75% { transform: translate(-20px, -15px) rotate(270deg); }
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2.5rem;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 3rem;
+            position: relative;
+            border-bottom: 3px solid var(--gold);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: var(--dark-blue);
+            margin-bottom: 0.5rem;
+            font-size: 3rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, var(--dark-blue), var(--crimson));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            font-weight: 300;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: var(--dark-blue);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-3px);
+            border-color: var(--gold);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.8rem 1.8rem;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4);
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        /* Лента времени */
+        .timeline {
+            position: relative;
+            max-width: 1400px;
+            margin: 0 auto 4rem;
+            padding: 3rem 0;
+        }
+
+        .timeline::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            background: linear-gradient(to bottom, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3, #54a0ff, #5f27cd, #00d2d3, #ff9f43, #ee5253, #10ac84);
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            margin-left: -4px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+        }
+
+        .era-container {
+            padding: 1.5rem 3rem;
+            position: relative;
+            width: 50%;
+            animation: fadeIn 0.8s ease-in;
+            opacity: 1;
+            transition: all 0.5s ease;
+        }
+
+        .era-container.hidden {
+            opacity: 0.3;
+            transform: scale(0.95);
+        }
+
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(30px) scale(0.9); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+
+        .left-era { left: 0; }
+        .right-era { left: 50%; }
+
+        .era-content {
+            padding: 2.5rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border-left: 6px solid;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .era-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+            transition: left 0.7s;
+        }
+
+        .era-content:hover::before {
+            left: 100%;
+        }
+
+        .era-content:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .era-content.expanded {
+            transform: scale(1.08);
+            z-index: 10;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        .era-badge {
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            background: var(--crimson);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(178, 31, 31, 0.3);
+        }
+
+        /* Цвета эпох */
+        .paleolithic { border-left-color: #ff6b6b; }
+        .mesolithic { border-left-color: #4ecdc4; }
+        .neolithic { border-left-color: #45b7d1; }
+        .bronze-age { border-left-color: #96ceb4; }
+        .iron-age { border-left-color: #feca57; }
+        .classical { border-left-color: #ff9ff3; }
+        .middle-ages { border-left-color: #54a0ff; }
+        .renaissance { border-left-color: #5f27cd; }
+        .enlightenment { border-left-color: #00d2d3; }
+        .industrial { border-left-color: #ff9f43; }
+        .modern { border-left-color: #ee5253; }
+        .contemporary { border-left-color: #10ac84; }
+
+        .era-content h2 {
+            color: #2c3e50;
+            margin-bottom: 0.8rem;
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .era-date {
+            color: #e74c3c;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 1.2rem;
+            display: block;
+            background: rgba(231, 76, 60, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            display: inline-block;
+        }
+
+        /* Карусель фото */
+        .photo-carousel {
+            position: relative;
+            margin: 1.5rem 0;
+            border-radius: 15px;
+            overflow: hidden;
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+            aspect-ratio: 16/9;
+        }
+
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .carousel-track {
+            display: flex;
+            transition: transform 0.5s ease;
+            height: 100%;
+        }
+
+        .carousel-slide {
+            min-width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+            position: relative;
+        }
+
+        .carousel-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .carousel-slide.no-image::before {
+            content: '🖼️ Фото ' attr(data-index);
+            position: absolute;
+            color: #666;
+            font-style: italic;
+            font-size: 1.2rem;
+        }
+
+        .carousel-slide.no-image img {
+            display: none;
+        }
+
+        .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.8);
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+            z-index: 2;
+        }
+
+        .carousel-btn:hover {
+            background: white;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .carousel-prev {
+            left: 20px;
+        }
+
+        .carousel-next {
+            right: 20px;
+        }
+
+        .carousel-dots {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 2;
+        }
+
+        .carousel-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .carousel-dot.active {
+            background: white;
+            transform: scale(1.2);
+        }
+
+        .tech-progress {
+            margin: 1rem 0;
+            background: rgba(52, 152, 219, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+        }
+
+        .tech-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 0.5rem 0;
+        }
+
+        .tech-bar {
+            flex-grow: 1;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin: 0 1rem;
+            overflow: hidden;
+        }
+
+        .tech-level {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        .quick-facts {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin: 1.5rem 0;
+            border-left: 5px solid #3498db;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .quick-facts:hover {
+            transform: translateX(10px);
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .key-figures, .inventions {
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin: 1rem 0;
+            border-left: 4px solid;
+        }
+
+        .key-figures {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            border-left-color: #f39c12;
+        }
+
+        .key-figures h3 {
+            color: #e67e22;
+            margin-bottom: 0.5rem;
+        }
+
+        .inventions {
+            background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+            border-left-color: #17a2b8;
+        }
+
+        .inventions h3 {
+            color: #138496;
+            margin-bottom: 0.5rem;
+        }
+
+        .era-content ul {
+            list-style: none;
+            padding-left: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.6s ease;
+        }
+
+        .era-content.expanded ul {
+            max-height: 800px;
+        }
+
+        .era-content li {
+            padding: 0.8rem 0;
+            border-bottom: 1px solid #eee;
+            position: relative;
+            padding-left: 2rem;
+            opacity: 0;
+            transform: translateX(-20px);
+            transition: all 0.4s ease;
+        }
+
+        .era-content.expanded li {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .era-content li:before {
+            content: "✨";
+            color: #3498db;
+            font-size: 1.2rem;
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .era-content li:last-child {
+            border-bottom: none;
+        }
+
+        .era-container::after {
+            content: '';
+            position: absolute;
+            width: 35px;
+            height: 35px;
+            background: white;
+            border: 5px solid;
+            top: 2.5rem;
+            border-radius: 50%;
+            z-index: 1;
+            transition: all 0.4s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .era-container:hover::after {
+            transform: scale(1.3) rotate(15deg);
+        }
+
+        .left-era::after { right: -17px; }
+        .right-era::after { left: -17px; }
+
+        .paleolithic::after { border-color: #ff6b6b; background: #ff6b6b; }
+        .mesolithic::after { border-color: #4ecdc4; background: #4ecdc4; }
+        .neolithic::after { border-color: #45b7d1; background: #45b7d1; }
+        .bronze-age::after { border-color: #96ceb4; background: #96ceb4; }
+        .iron-age::after { border-color: #feca57; background: #feca57; }
+        .classical::after { border-color: #ff9ff3; background: #ff9ff3; }
+        .middle-ages::after { border-color: #54a0ff; background: #54a0ff; }
+        .renaissance::after { border-color: #5f27cd; background: #5f27cd; }
+        .enlightenment::after { border-color: #00d2d3; background: #00d2d3; }
+        .industrial::after { border-color: #ff9f43; background: #ff9f43; }
+        .modern::after { border-color: #ee5253; background: #ee5253; }
+        .contemporary::after { border-color: #10ac84; background: #10ac84; }
+
+        /* Кнопка викторины */
+        .quiz-btn {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 1.5rem 0;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .quiz-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(155, 89, 182, 0.4);
+        }
+
+        /* Модальное окно викторины */
+        .quiz-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .quiz-content {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #eee;
+        }
+
+        .quiz-title {
+            color: var(--dark-blue);
+            font-size: 1.8rem;
+            margin: 0;
+        }
+
+        .close-quiz {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .question {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border-left: 4px solid var(--dark-blue);
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1.2rem;
+            color: #2c3e50;
+        }
+
+        .answers {
+            display: grid;
+            gap: 0.8rem;
+        }
+
+        .answer-btn {
+            padding: 1rem 1.5rem;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .answer-btn:hover {
+            border-color: #3498db;
+            transform: translateX(5px);
+        }
+
+        .answer-btn.correct {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .answer-btn.incorrect {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+
+        .quiz-progress {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 2px solid #eee;
+        }
+
+        .progress-text {
+            text-align: center;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .quiz-result {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .result-title {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--dark-blue);
+        }
+
+        .result-score {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--crimson);
+            margin: 1rem 0;
+        }
+
+        .restart-quiz {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .restart-quiz:hover {
+            transform: translateY(-2px);
+        }
+
+        footer {
+            background: rgba(44, 62, 80, 0.95);
+            color: white;
+            text-align: center;
+            padding: 3rem 2rem;
+            margin-top: 4rem;
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 5px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1);
+            z-index: 1000;
+            transition: width 0.3s ease;
+        }
+
+        .timeline-nav {
+            position: fixed;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        .nav-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-dot.active {
+            background: white;
+            transform: scale(1.5);
+        }
+
+        .nav-dot::after {
+            content: attr(data-era);
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .nav-dot:hover::after {
+            opacity: 1;
+        }
+
+        /* Адаптивность */
+        @media screen and (max-width: 768px) {
+            .timeline::after {
+                left: 31px;
+            }
+
+            .era-container {
+                width: 100%;
+                padding-left: 70px;
+                padding-right: 25px;
+            }
+
+            .right-era {
+                left: 0;
+            }
+
+            .era-container::after {
+                left: 18px;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .stats-bar {
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
+            }
+
+            .timeline-nav {
+                display: none;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .carousel-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+
+            .carousel-prev {
+                left: 10px;
+            }
+
+            .carousel-next {
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Анимированный фон -->
+    <div class="animated-bg">
+        <div class="bg-particle"></div>
+        <div class="bg-particle"></div>
+        <div class="bg-particle"></div>
+        <div class="bg-particle"></div>
+    </div>
+
+    <!-- Декоративные элементы -->
+    <div class="decoration">⚔️</div>
+    <div class="decoration">🏛️</div>
+    <div class="decoration">🔬</div>
+    <div class="decoration">💻</div>
+
+    <div class="progress-bar" id="progressBar"></div>
+    
+    <div class="timeline-nav">
+        <div class="nav-dot active" data-era="Палеолит" onclick="scrollToEra('paleolithic')"></div>
+        <div class="nav-dot" data-era="Античность" onclick="scrollToEra('classical')"></div>
+        <div class="nav-dot" data-era="Средневековье" onclick="scrollToEra('middle-ages')"></div>
+        <div class="nav-dot" data-era="Возрождение" onclick="scrollToEra('renaissance')"></div>
+        <div class="nav-dot" data-era="Современность" onclick="scrollToEra('contemporary')"></div>
+    </div>
+    
+    <header>
+        <div class="header-content">
+            <h1>🌍 Интерактивная хронология истории человечества</h1>
+            <p class="subtitle">Путешествие сквозь время: от каменного века до цифровой эры</p>
+            
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <i class="fas fa-history"></i>
+                    <span>12 исторических эпох</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-rocket"></i>
+                    <span>2.5 млн лет эволюции</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>100+ ключевых открытий</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-globe"></i>
+                    <span>Всемирный масштаб</span>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button class="filter-btn active" data-era="all">
+                    <i class="fas fa-layer-group"></i>Все эпохи
+                </button>
+                <button class="filter-btn" data-era="ancient">
+                    <i class="fas fa-monument"></i>Древний мир
+                </button>
+                <button class="filter-btn" data-era="medieval">
+                    <i class="fas fa-fort-awesome"></i>Средневековье
+                </button>
+                <button class="filter-btn" data-era="modern">
+                    <i class="fas fa-industry"></i>Новое время
+                </button>
+                <button class="filter-btn" data-era="contemporary">
+                    <i class="fas fa-laptop-code"></i>Новейшее время
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <section class="timeline">
+        <!-- Палеолит -->
+        <div class="era-container left-era ancient" data-era="ancient" id="paleolithic">
+            <div class="era-content paleolithic">
+                <div class="era-badge">Древнейший период</div>
+                <h2>🪨 Палеолит</h2>
+                <span class="era-date">~ 2.5 млн. лет назад - 10 тыс. лет до н.э.</span>
+                
+                <!-- Карусель фото -->
+                <div class="photo-carousel">
+                    <div class="carousel-container">
+                        <div class="carousel-track">
+                            <div class="carousel-slide" data-index="1">
+                                <img src="pal1.jpg" alt="Палеолит - каменные орудия" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="2">
+                                <img src="pal2.jpg" alt="Палеолит - пещерная живопись" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="3">
+                                <img src="pal3.jpg" alt="Палеолит - охота" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="4">
+                                <img src="pal4.jpg" alt="Палеолит - стоянка" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                        </div>
+                        <button class="carousel-btn carousel-prev">❮</button>
+                        <button class="carousel-btn carousel-next">❯</button>
+                        <div class="carousel-dots"></div>
+                    </div>
+                </div>
+                
+                <button class="quiz-btn" onclick="openQuiz('paleolithic')">
+                    <i class="fas fa-brain"></i> Викторина по Палеолиту
+                </button>
+                
+                <div class="tech-progress">
+                    <div class="tech-item">
+                        <span>Технологии</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 10%"></div></div>
+                        <span>10%</span>
+                    </div>
+                    <div class="tech-item">
+                        <span>Социальная организация</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 5%"></div></div>
+                        <span>5%</span>
+                    </div>
+                </div>
+                
+                <div class="quick-facts">
+                    <strong>🔍 Основные достижения:</strong> Первые орудия труда, освоение огня, начало искусства
+                </div>
+
+                <div class="key-figures">
+                    <h3>🧬 Ключевые особенности:</h3>
+                    <p>• Кочевой образ жизни охотников-собирателей<br>
+                       • Появление первых духовных представлений<br>
+                       • Развитие примитивного языка и коммуникации</p>
+                </div>
+
+                <div class="inventions">
+                    <h3>🛠️ Важные изобретения:</h3>
+                    <p>• Каменные рубила и скребки<br>
+                       • Копья и гарпуны из кости<br>
+                       • Примитивные ловушки для животных</p>
+                </div>
+                
+                <ul>
+                    <li><strong>Олдувайская культура</strong> - первые каменные орудия (2.6 млн лет назад)</li>
+                    <li><strong>Освоение огня</strong> - тепловая обработка пищи и защита (1.5 млн лет назад)</li>
+                    <li><strong>Пещерная живопись</strong> - Альтамира, Шове, Ласко (40-10 тыс. лет до н.э.)</li>
+                    <li><strong>Появление Homo sapiens</strong> - современный человек (300 тыс. лет назад)</li>
+                    <li><strong>Ритуальные практики</strong> - первые захоронения с ритуальными предметами</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Мезолит -->
+        <div class="era-container right-era ancient" data-era="ancient" id="mesolithic">
+            <div class="era-content mesolithic">
+                <div class="era-badge">Переходный период</div>
+                <h2>🏹 Мезолит</h2>
+                <span class="era-date">~ 10 тыс. - 6 тыс. лет до н.э.</span>
+                
+                <div class="photo-carousel">
+                    <div class="carousel-container">
+                        <div class="carousel-track">
+                            <div class="carousel-slide" data-index="1">
+                                <img src="mez1.jpg" alt="Мезолит - лук и стрелы" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="2">
+                                <img src="mez2.jpg" alt="Мезолит - микролиты" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="3">
+                                <img src="mez3.jpg" alt="Мезолит - рыболовство" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="4">
+                                <img src="mez4.jpg" alt="Мезолит - приручение собаки" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                        </div>
+                        <button class="carousel-btn carousel-prev">❮</button>
+                        <button class="carousel-btn carousel-next">❯</button>
+                        <div class="carousel-dots"></div>
+                    </div>
+                </div>
+                
+                <button class="quiz-btn" onclick="openQuiz('mesolithic')">
+                    <i class="fas fa-brain"></i> Викторина по Мезолиту
+                </button>
+                
+                <div class="tech-progress">
+                    <div class="tech-item">
+                        <span>Технологии</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 25%"></div></div>
+                        <span>25%</span>
+                    </div>
+                    <div class="tech-item">
+                        <span>Адаптация</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 40%"></div></div>
+                        <span>40%</span>
+                    </div>
+                </div>
+                
+                <div class="quick-facts">
+                    <strong>🔍 Основные достижения:</strong> Адаптация к изменению климата, новые технологии охоты
+                </div>
+
+                <div class="key-figures">
+                    <h3>🌍 Изменения среды:</h3>
+                    <p>• Конец ледникового периода<br>
+                       • Повышение уровня моря<br>
+                       • Формирование современных экосистем</p>
+                </div>
+
+                <div class="inventions">
+                    <h3>🎯 Технологические новшества:</h3>
+                    <p>• Лук и стрелы<br>
+                       • Микролиты - составные орудия<br>
+                       • Примитивные лодки и плоты</p>
+                </div>
+                
+                <ul>
+                    <li><strong>Таяние ледников</strong> - кардинальное изменение флоры и фауны</li>
+                    <li><strong>Изобретение лука</strong> - революция в охоте и военном деле</li>
+                    <li><strong>Микролиты</strong> - миниатюрные каменные орудия для составных инструментов</li>
+                    <li><strong>Приручение собаки</strong> - первый домашний вид-компаньон</li>
+                    <li><strong>Развитие рыболовства</strong> - сети, гарпуны, рыболовные крючки</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Неолит -->
+        <div class="era-container left-era ancient" data-era="ancient" id="neolithic">
+            <div class="era-content neolithic">
+                <div class="era-badge">Неолитическая революция</div>
+                <h2>🌾 Неолит</h2>
+                <span class="era-date">~ 6 тыс. - 3 тыс. лет до н.э.</span>
+                
+                <div class="photo-carousel">
+                    <div class="carousel-container">
+                        <div class="carousel-track">
+                            <div class="carousel-slide" data-index="1">
+                                <img src="neo1.jpg" alt="Неолит - земледелие" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="2">
+                                <img src="neo2.jpg" alt="Неолит - гончарство" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="3">
+                                <img src="neo3.jpg" alt="Неолит - поселения" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="4">
+                                <img src="neo4.jpg" alt="Неолит - ткачество" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                        </div>
+                        <button class="carousel-btn carousel-prev">❮</button>
+                        <button class="carousel-btn carousel-next">❯</button>
+                        <div class="carousel-dots"></div>
+                    </div>
+                </div>
+                
+                <button class="quiz-btn" onclick="openQuiz('neolithic')">
+                    <i class="fas fa-brain"></i> Викторина по Неолиту
+                </button>
+                
+                <div class="tech-progress">
+                    <div class="tech-item">
+                        <span>Сельское хозяйство</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 70%"></div></div>
+                        <span>70%</span>
+                    </div>
+                    <div class="tech-item">
+                        <span>Социальная сложность</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 50%"></div></div>
+                        <span>50%</span>
+                    </div>
+                </div>
+                
+                <div class="quick-facts">
+                    <strong>🔍 Основные достижения:</strong> Неолитическая революция - переход к производящему хозяйству
+                </div>
+
+                <div class="key-figures">
+                    <h3>🏘️ Социальные изменения:</h3>
+                    <p>• Появление постоянных поселений<br>
+                       • Рост населения<br>
+                       • Зарождение социального неравенства</p>
+                </div>
+
+                <div class="inventions">
+                    <h3>🏺 Технологические прорывы:</h3>
+                    <p>• Гончарное ремесло<br>
+                       • Ткачество<br>
+                       • Ирригационные системы</p>
+                </div>
+                
+                <ul>
+                    <li><strong>Земледелие</strong> - одомашнивание пшеницы, ячменя, риса, кукурузы</li>
+                    <li><strong>Скотоводство</strong> - приручение коз, овец, крупного рогатого скота</li>
+                    <li><strong>Постоянные поселения</strong> - Иерихон (Палестина), Чатал-Хююк (Турция)</li>
+                    <li><strong>Гончарное дело</strong> - керамические сосуды для хранения и приготовления пищи</li>
+                    <li><strong>Ткачество</strong> - производство тканей из льна, шерсти, хлопка</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Бронзовый век -->
+        <div class="era-container right-era ancient" data-era="ancient" id="bronze-age">
+            <div class="era-content bronze-age">
+                <div class="era-badge">Первые цивилизации</div>
+                <h2>⚔️ Бронзовый век</h2>
+                <span class="era-date">~ 3 тыс. - 1.2 тыс. лет до н.э.</span>
+                
+                <div class="photo-carousel">
+                    <div class="carousel-container">
+                        <div class="carousel-track">
+                            <div class="carousel-slide" data-index="1">
+                                <img src="br1.jpg" alt="Бронзовый век - металлургия" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="2">
+                                <img src="br2.jpg" alt="Бронзовый век - цивилизации" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="3">
+                                <img src="br3.jpg" alt="Бронзовый век - письменность" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="4">
+                                <img src="br4.jpg" alt="Бронзовый век - архитектура" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                        </div>
+                        <button class="carousel-btn carousel-prev">❮</button>
+                        <button class="carousel-btn carousel-next">❯</button>
+                        <div class="carousel-dots"></div>
+                    </div>
+                </div>
+                
+                <button class="quiz-btn" onclick="openQuiz('bronze-age')">
+                    <i class="fas fa-brain"></i> Викторина по Бронзовому веку
+                </button>
+                
+                <div class="tech-progress">
+                    <div class="tech-item">
+                        <span>Металлургия</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 60%"></div></div>
+                        <span>60%</span>
+                    </div>
+                    <div class="tech-item">
+                        <span>Письменность</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 40%"></div></div>
+                        <span>40%</span>
+                    </div>
+                </div>
+                
+                <div class="quick-facts">
+                    <strong>🔍 Основные достижения:</strong> Металлургия, первые цивилизации, письменность
+                </div>
+
+                <div class="key-figures">
+                    <h3>🏛️ Великие цивилизации:</h3>
+                    <p>• Древний Египет - пирамиды, фараоны<br>
+                       • Месопотамия - шумеры, вавилоняне<br>
+                       • Хараппская цивилизация - Инд</p>
+                </div>
+
+                <div class="inventions">
+                    <h3>📜 Культурные достижения:</h3>
+                    <p>• Клинопись и иероглифы<br>
+                       • Бронзовое оружие и инструменты<br>
+                       • Колесо и колесницы</p>
+                </div>
+                
+                <ul>
+                    <li><strong>Металлургия</strong> - обработка меди и олова, создание бронзы</li>
+                    <li><strong>Первые цивилизации</strong> - Месопотамия, Египет, долина Инда, Китай</li>
+                    <li><strong>Письменность</strong> - клинопись в Шумере, иероглифы в Египте</li>
+                    <li><strong>Государства</strong> - социальная стратификация, правящие династии</li>
+                    <li><strong>Торговые сети</strong> - международный обмен от Афганистана до Средиземноморья</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Железный век -->
+        <div class="era-container left-era ancient" data-era="ancient" id="iron-age">
+            <div class="era-content iron-age">
+                <div class="era-badge">Расцвет древних империй</div>
+                <h2>🛠️ Железный век</h2>
+                <span class="era-date">~ 1.2 тыс. - 500 лет до н.э.</span>
+                
+                <div class="photo-carousel">
+                    <div class="carousel-container">
+                        <div class="carousel-track">
+                            <div class="carousel-slide" data-index="1">
+                                <img src="ir1.jpg" alt="Железный век - металлообработка" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="2">
+                                <img src="ir2.jpg" alt="Железный век - империи" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="3">
+                                <img src="ir3.jpg" alt="Железный век - философия" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="4">
+                                <img src="ir4.jpg" alt="Железный век - монеты" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                        </div>
+                        <button class="carousel-btn carousel-prev">❮</button>
+                        <button class="carousel-btn carousel-next">❯</button>
+                        <div class="carousel-dots"></div>
+                    </div>
+                </div>
+                
+                <button class="quiz-btn" onclick="openQuiz('iron-age')">
+                    <i class="fas fa-brain"></i> Викторина по Железному веку
+                </button>
+                
+                <div class="tech-progress">
+                    <div class="tech-item">
+                        <span>Металлообработка</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 80%"></div></div>
+                        <span>80%</span>
+                    </div>
+                    <div class="tech-item">
+                        <span>Военные технологии</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 70%"></div></div>
+                        <span>70%</span>
+                    </div>
+                </div>
+                
+                <div class="quick-facts">
+                    <strong>🔍 Основные достижения:</strong> Массовое использование железа, развитие ремесла
+                </div>
+
+                <div class="key-figures">
+                    <h3>🌏 Великие империи:</h3>
+                    <p>• Ассирийская империя<br>
+                       • Персидская империя<br>
+                       • Династии Чжоу в Китае</p>
+                </div>
+
+                <div class="inventions">
+                    <h3>⚒️ Технологические инновации:</h3>
+                    <p>• Железные орудия и оружие<br>
+                       • Усовершенствованная керамика<br>
+                       • Сложные ирригационные системы</p>
+                </div>
+                
+                <ul>
+                    <li><strong>Железные орудия</strong> - доступность и эффективность в сельском хозяйстве и ремесле</li>
+                    <li><strong>Ремесленная специализация</strong> - сложные технологии обработки металлов</li>
+                    <li><strong>Философия и наука</strong> - первые теоретические знания в Греции, Индии, Китае</li>
+                    <li><strong>Классические цивилизации</strong> - Греция, Рим, империя Ахеменидов</li>
+                    <li><strong>Денежные системы</strong> - первые монеты в Лидии (Малая Азия)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Античность -->
+        <div class="era-container right-era ancient" data-era="ancient" id="classical">
+            <div class="era-content classical">
+                <div class="era-badge">Золотой век философии</div>
+                <h2>🏛️ Античность</h2>
+                <span class="era-date">~ 800 лет до н.э. - 500 лет н.э.</span>
+                
+                <div class="photo-carousel">
+                    <div class="carousel-container">
+                        <div class="carousel-track">
+                            <div class="carousel-slide" data-index="1">
+                                <img src="cl1.jpg" alt="Античность - философия" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="2">
+                                <img src="cl2.jpg" alt="Античность - архитектура" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="3">
+                                <img src="cl3.jpg" alt="Античность - искусство" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="4">
+                                <img src="cl4.jpg" alt="Античность - наука" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                        </div>
+                        <button class="carousel-btn carousel-prev">❮</button>
+                        <button class="carousel-btn carousel-next">❯</button>
+                        <div class="carousel-dots"></div>
+                    </div>
+                </div>
+                
+                <button class="quiz-btn" onclick="openQuiz('classical')">
+                    <i class="fas fa-brain"></i> Викторина по Античности
+                </button>
+                
+                <div class="tech-progress">
+                    <div class="tech-item">
+                        <span>Философия и наука</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 85%"></div></div>
+                        <span>85%</span>
+                    </div>
+                    <div class="tech-item">
+                        <span>Архитектура</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 90%"></div></div>
+                        <span>90%</span>
+                    </div>
+                </div>
+                
+                <div class="quick-facts">
+                    <strong>🔍 Основные достижения:</strong> Расцвет философии, демократии, архитектуры
+                </div>
+
+                <div class="key-figures">
+                    <h3>🎭 Великие личности:</h3>
+                    <p>• Сократ, Платон, Аристотель<br>
+                       • Александр Македонский<br>
+                       • Юлий Цезарь, Август</p>
+                </div>
+
+                <div class="inventions">
+                    <h3>🏟️ Культурное наследие:</h3>
+                    <p>• Демократическая система<br>
+                       • Римское право<br>
+                       • Классическая архитектура</p>
+                </div>
+                
+                <ul>
+                    <li><strong>Демократия</strong> - афинская модель управления (V век до н.э.)</li>
+                    <li><strong>Римское право</strong> - основа современных правовых систем Европы</li>
+                    <li><strong>Философские школы</strong> - Платон, Аристотель, Сократ, стоики, эпикурейцы</li>
+                    <li><strong>Архитектурные шедевры</strong> - Парфенон, Колизей, Пантеон, акведуки</li>
+                    <li><strong>Научные открытия</strong> - математика (Евклид), медицина (Гиппократ), астрономия (Птолемей)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Средневековье -->
+        <div class="era-container left-era medieval" data-era="medieval" id="middle-ages">
+            <div class="era-content middle-ages">
+                <div class="era-badge">Эпоха рыцарей и замков</div>
+                <h2>⚔️ Средневековье</h2>
+                <span class="era-date">~ 500 - 1500 годы</span>
+                
+                <div class="photo-carousel">
+                    <div class="carousel-container">
+                        <div class="carousel-track">
+                            <div class="carousel-slide" data-index="1">
+                                <img src="ma1.jpg" alt="Средневековье - рыцари" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="2">
+                                <img src="ma2.jpg" alt="Средневековье - замки" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="3">
+                                <img src="ma3.jpg" alt="Средневековье - соборы" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="4">
+                                <img src="ma4.jpg" alt="Средневековье - университеты" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                        </div>
+                        <button class="carousel-btn carousel-prev">❮</button>
+                        <button class="carousel-btn carousel-next">❯</button>
+                        <div class="carousel-dots"></div>
+                    </div>
+                </div>
+                
+                <button class="quiz-btn" onclick="openQuiz('middle-ages')">
+                    <i class="fas fa-brain"></i> Викторина по Средневековью
+                </button>
+                
+                <div class="tech-progress">
+                    <div class="tech-item">
+                        <span>Религиозное влияние</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 95%"></div></div>
+                        <span>95%</span>
+                    </div>
+                    <div class="tech-item">
+                        <span>Военное искусство</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 80%"></div></div>
+                        <span>80%</span>
+                    </div>
+                </div>
+                
+                <div class="quick-facts">
+                    <strong>🔍 Основные достижения:</strong> Феодализм, рыцарская культура, готическая архитектура
+                </div>
+
+                <div class="key-figures">
+                    <h3>🕌 Религиозные центры:</h3>
+                    <p>• Римско-католическая церковь<br>
+                       • Византийская империя<br>
+                       • Исламский халифат</p>
+                </div>
+
+                <div class="inventions">
+                    <h3>⚗️ Технические новшества:</h3>
+                    <p>• Ветряные и водяные мельницы<br>
+                       • Очки и механические часы<br>
+                       • Порох и пушки</p>
+                </div>
+                
+                <ul>
+                    <li><strong>Феодальная система</strong> - земельная иерархия и вассальные отношения</li>
+                    <li><strong>Рыцарство</strong> - военно-этический кодекс и культура</li>
+                    <li><strong>Готическая архитектура</strong> - соборы Нотр-Дам, Шартрский, Кёльнский</li>
+                    <li><strong>Университеты</strong> - Болонья (1088), Оксфорд (1167), Сорбонна (1257)</li>
+                    <li><strong>Великие географические открытия</strong> - Марко Поло, викинги в Америке</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Возрождение -->
+        <div class="era-container right-era medieval" data-era="medieval" id="renaissance">
+            <div class="era-content renaissance">
+                <div class="era-badge">Рождение современности</div>
+                <h2>🎨 Возрождение</h2>
+                <span class="era-date">~ 1300 - 1600 годы</span>
+                
+                <div class="photo-carousel">
+                    <div class="carousel-container">
+                        <div class="carousel-track">
+                            <div class="carousel-slide" data-index="1">
+                                <img src="re1.jpg" alt="Возрождение - искусство" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="2">
+                                <img src="re2.jpg" alt="Возрождение - наука" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="3">
+                                <img src="re3.jpg" alt="Возрождение - архитектура" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="4">
+                                <img src="re4.jpg" alt="Возрождение - книгопечатание" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                        </div>
+                        <button class="carousel-btn carousel-prev">❮</button>
+                        <button class="carousel-btn carousel-next">❯</button>
+                        <div class="carousel-dots"></div>
+                    </div>
+                </div>
+                
+                <button class="quiz-btn" onclick="openQuiz('renaissance')">
+                    <i class="fas fa-brain"></i> Викторина по Возрождению
+                </button>
+                
+                <div class="tech-progress">
+                    <div class="tech-item">
+                        <span>Искусство</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 95%"></div></div>
+                        <span>95%</span>
+                    </div>
+                    <div class="tech-item">
+                        <span>Научные открытия</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 70%"></div></div>
+                        <span>70%</span>
+                    </div>
+                </div>
+                
+                <div class="quick-facts">
+                    <strong>🔍 Основные достижения:</strong> Расцвет искусства, науки, гуманизма
+                </div>
+
+                <div class="key-figures">
+                    <h3>🎨 Великие творцы:</h3>
+                    <p>• Леонардо да Винчи<br>
+                       • Микеланджело Буонарроти<br>
+                       • Рафаэль Санти</p>
+                </div>
+
+                <div class="inventions">
+                    <h3>📚 Интеллектуальные достижения:</h3>
+                    <p>• Книгопечатание Гутенберга<br>
+                       • Гелиоцентрическая система<br>
+                       • Анатомические исследования</p>
+                </div>
+                
+                <ul>
+                    <li><strong>Гуманизм</strong> - антропоцентрическое мировоззрение, интерес к античности</li>
+                    <li><strong>Научная революция</strong> - Коперник, Галилей, переход к экспериментальной науке</li>
+                    <li><strong>Великие художники</strong> - Леонардо да Винчи, Микеланджело, Рафаэль, Тициан</li>
+                    <li><strong>Книгопечатание</strong> - Иоганн Гутенберг (1450), распространение знаний</li>
+                    <li><strong>Архитектурные стили</strong> - возврат к античным канонам, симметрия, пропорции</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Просвещение -->
+        <div class="era-container left-era modern" data-era="modern" id="enlightenment">
+            <div class="era-content enlightenment">
+                <div class="era-badge">Век разума</div>
+                <h2>💡 Просвещение</h2>
+                <span class="era-date">~ 1680 - 1780 годы</span>
+                
+                <div class="photo-carousel">
+                    <div class="carousel-container">
+                        <div class="carousel-track">
+                            <div class="carousel-slide" data-index="1">
+                                <img src="en1.jpg" alt="Просвещение - философия" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="2">
+                                <img src="en2.jpg" alt="Просвещение - наука" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="3">
+                                <img src="en3.jpg" alt="Просвещение - энциклопедия" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="4">
+                                <img src="en4.jpg" alt="Просвещение - салоны" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                        </div>
+                        <button class="carousel-btn carousel-prev">❮</button>
+                        <button class="carousel-btn carousel-next">❯</button>
+                        <div class="carousel-dots"></div>
+                    </div>
+                </div>
+                
+                <button class="quiz-btn" onclick="openQuiz('enlightenment')">
+                    <i class="fas fa-brain"></i> Викторина по Просвещению
+                </button>
+                
+                <div class="tech-progress">
+                    <div class="tech-item">
+                        <span>Философская мысль</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 90%"></div></div>
+                        <span>90%</span>
+                    </div>
+                    <div class="tech-item">
+                        <span>Политические идеи</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 85%"></div></div>
+                        <span>85%</span>
+                    </div>
+                </div>
+                
+                <div class="quick-facts">
+                    <strong>🔍 Основные достижения:</strong> Разум, свобода, научный прогресс
+                </div>
+
+                <div class="key-figures">
+                    <h3>📖 Великие мыслители:</h3>
+                    <p>• Вольтер<br>
+                       • Жан-Жак Руссо<br>
+                       • Джон Локк</p>
+                </div>
+
+                <div class="inventions">
+                    <h3>🔬 Научные прорывы:</h3>
+                    <p>• Закон всемирного тяготения<br>
+                       • Электричество<br>
+                       • Система классификации организмов</p>
+                </div>
+                
+                <ul>
+                    <li><strong>Философия разума</strong> - Вольтер, Руссо, Монтескье, Дидро, Кант</li>
+                    <li><strong>Энциклопедия</strong> - Дени Дидро, систематизация всех знаний человечества</li>
+                    <li><strong>Естественные науки</strong> - Ньютон (физика), Линней (биология), Лавуазье (химия)</li>
+                    <li><strong>Теория общественного договора</strong> - новые политические идеи и концепция прав человека</li>
+                    <li><strong>Салонная культура</strong> - интеллектуальные дискуссии в аристократических салонах</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Индустриальная эра -->
+        <div class="era-container right-era modern" data-era="modern" id="industrial">
+            <div class="era-content industrial">
+                <div class="era-badge">Техническая революция</div>
+                <h2>🏭 Индустриальная эра</h2>
+                <span class="era-date">~ 1760 - 1914 годы</span>
+                
+                <div class="photo-carousel">
+                    <div class="carousel-container">
+                        <div class="carousel-track">
+                            <div class="carousel-slide" data-index="1">
+                                <img src="in1.jpg" alt="Индустриальная эра - паровая машина" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="2">
+                                <img src="in2.jpg" alt="Индустриальная эра - железные дороги" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="3">
+                                <img src="in3.jpg" alt="Индустриальная эра - фабрики" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="4">
+                                <img src="in4.jpg" alt="Индустриальная эра - телеграф" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                        </div>
+                        <button class="carousel-btn carousel-prev">❮</button>
+                        <button class="carousel-btn carousel-next">❯</button>
+                        <div class="carousel-dots"></div>
+                    </div>
+                </div>
+                
+                <button class="quiz-btn" onclick="openQuiz('industrial')">
+                    <i class="fas fa-brain"></i> Викторина по Индустриальной эре
+                </button>
+                
+                <div class="tech-progress">
+                    <div class="tech-item">
+                        <span>Промышленность</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 95%"></div></div>
+                        <span>95%</span>
+                    </div>
+                    <div class="tech-item">
+                        <span>Транспорт</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 80%"></div></div>
+                        <span>80%</span>
+                    </div>
+                </div>
+                
+                <div class="quick-facts">
+                    <strong>🔍 Основные достижения:</strong> Промышленная революция, технический прогресс
+                </div>
+
+                <div class="key-figures">
+                    <h3>🏭 Великие изобретатели:</h3>
+                    <p>• Джеймс Уатт<br>
+                       • Джордж Стефенсон<br>
+                       • Томас Эдисон</p>
+                </div>
+
+                <div class="inventions">
+                    <h3>🚂 Технологические прорывы:</h3>
+                    <p>• Паровая машина<br>
+                       • Железные дороги<br>
+                       • Телеграф и телефон</p>
+                </div>
+                
+                <ul>
+                    <li><strong>Паровая машина</strong> - Джеймс Уатт, энергетическая революция</li>
+                    <li><strong>Механизация</strong> - текстильная промышленность, прядильные машины</li>
+                    <li><strong>Железные дороги</strong> - Джордж Стефенсон, транспортная революция</li>
+                    <li><strong>Телеграф и телефон</strong> - Морзе, Белл, мгновенная связь на расстоянии</li>
+                    <li><strong>Урбанизация</strong> - массовый переезд в города, новый уклад жизни</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Современность -->
+        <div class="era-container left-era contemporary" data-era="contemporary" id="modern-era">
+            <div class="era-content modern">
+                <div class="era-badge">Научно-техническая революция</div>
+                <h2>🚀 Современность</h2>
+                <span class="era-date">~ 1900 - 2000 годы</span>
+                
+                <div class="photo-carousel">
+                    <div class="carousel-container">
+                        <div class="carousel-track">
+                            <div class="carousel-slide" data-index="1">
+                                <img src="mo1.jpg" alt="Современность - наука" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="2">
+                                <img src="mo2.jpg" alt="Современность - технологии" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="3">
+                                <img src="mo3.jpg" alt="Современность - космос" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="4">
+                                <img src="mo4.jpg" alt="Современность - глобализация" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                        </div>
+                        <button class="carousel-btn carousel-prev">❮</button>
+                        <button class="carousel-btn carousel-next">❯</button>
+                        <div class="carousel-dots"></div>
+                    </div>
+                </div>
+                
+                <button class="quiz-btn" onclick="openQuiz('modern-era')">
+                    <i class="fas fa-brain"></i> Викторина по Современности
+                </button>
+                
+                <div class="tech-progress">
+                    <div class="tech-item">
+                        <span>Наука</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 95%"></div></div>
+                        <span>95%</span>
+                    </div>
+                    <div class="tech-item">
+                        <span>Технологии</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 90%"></div></div>
+                        <span>90%</span>
+                    </div>
+                </div>
+                
+                <div class="quick-facts">
+                    <strong>🔍 Основные достижения:</strong> Научно-техническая революция, глобализация
+                </div>
+
+                <div class="key-figures">
+                    <h3>🔬 Великие ученые:</h3>
+                    <p>• Альберт Эйнштейн<br>
+                       • Мария Кюри<br>
+                       • Стив Джобс</p>
+                </div>
+
+                <div class="inventions">
+                    <h3>💻 Технологические революции:</h3>
+                    <p>• Компьютеры и интернет<br>
+                       • Ядерная энергия<br>
+                       • Космические технологии</p>
+                </div>
+                
+                <ul>
+                    <li><strong>Теория относительности</strong> - Альберт Эйнштейн, новая физическая парадигма</li>
+                    <li><strong>Квантовая механика</strong> - Планк, Бор, Гейзенберг, фундаментальные открытия</li>
+                    <li><strong>Космические полеты</strong> - Гагарин, выход в космос, высадка на Луну</li>
+                    <li><strong>Цифровые технологии</strong> - компьютеры, интернет, мобильная связь</li>
+                    <li><strong>Глобализация</strong> - мировое экономическое пространство, международные организации</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Современность -->
+        <div class="era-container right-era contemporary" data-era="contemporary" id="contemporary">
+            <div class="era-content contemporary">
+                <div class="era-badge">Цифровая эра</div>
+                <h2>🌐 Современность</h2>
+                <span class="era-date">2000 год - настоящее время</span>
+                
+                <div class="photo-carousel">
+                    <div class="carousel-container">
+                        <div class="carousel-track">
+                            <div class="carousel-slide" data-index="1">
+                                <img src="co1.jpg" alt="Современность - ИИ" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="2">
+                                <img src="co2.jpg" alt="Современность - биотехнологии" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="3">
+                                <img src="co3.jpg" alt="Современность - квантовые вычисления" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                            <div class="carousel-slide" data-index="4">
+                                <img src="co4.jpg" alt="Современность - экология" onerror="this.parentElement.classList.add('no-image')">
+                            </div>
+                        </div>
+                        <button class="carousel-btn carousel-prev">❮</button>
+                        <button class="carousel-btn carousel-next">❯</button>
+                        <div class="carousel-dots"></div>
+                    </div>
+                </div>
+                
+                <button class="quiz-btn" onclick="openQuiz('contemporary')">
+                    <i class="fas fa-brain"></i> Викторина по Современности
+                </button>
+                
+                <div class="tech-progress">
+                    <div class="tech-item">
+                        <span>Искусственный интеллект</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 85%"></div></div>
+                        <span>85%</span>
+                    </div>
+                    <div class="tech-item">
+                        <span>Глобализация</span>
+                        <div class="tech-bar"><div class="tech-level" style="width: 95%"></div></div>
+                        <span>95%</span>
+                    </div>
+                </div>
+                
+                <div class="quick-facts">
+                    <strong>🔍 Основные достижения:</strong> Цифровая революция, ИИ, биотехнологии
+                </div>
+
+                <div class="key-figures">
+                    <h3>🌍 Глобальные вызовы:</h3>
+                    <p>• Изменение климата<br>
+                       • Цифровая трансформация<br>
+                       • Биотехнологическая революция</p>
+                </div>
+
+                <div class="inventions">
+                    <h3>🤖 Прорывные технологии:</h3>
+                    <p>• Искусственный интеллект<br>
+                       • Квантовые вычисления<br>
+                       • Редактирование генома</p>
+                </div>
+                
+                <ul>
+                    <li><strong>Искусственный интеллект</strong> - машинное обучение, нейросети, анализ больших данных</li>
+                    <li><strong>Биотехнологии</strong> - CRISPR, генная инженерия, персонализированная медицина</li>
+                    <li><strong>Возобновляемая энергетика</strong> - солнечная, ветровая, геотермальная энергия</li>
+                    <li><strong>Квантовые вычисления</strong> - новая вычислительная парадигма, квантовые компьютеры</li>
+                    <li><strong>Глобальные экологические вызовы</strong> - изменение климата, устойчивое развитие</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Модальное окно викторины -->
+    <div id="quizModal" class="quiz-modal">
+        <div class="quiz-content">
+            <div class="quiz-header">
+                <h2 class="quiz-title" id="quizEraTitle">Викторина</h2>
+                <button class="close-quiz" onclick="closeQuiz()">&times;</button>
+            </div>
+            <div id="quizQuestions"></div>
+            <div class="quiz-progress">
+                <div class="progress-text" id="quizProgress">Вопрос 1 из 5</div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <p>Сделано с ❤️ для курса всемирной истории | Userov Nurlybek | 2025</p>
+            <p>Интерактивная хронология как образовательный проект</p>
+        </div>
+    </footer>
+
+    <script>
+        // База данных викторин
+        const quizzes = {
+            'paleolithic': {
+                title: '🪨 Палеолит',
+                questions: [
+                    {
+                        question: 'Какая культура считается древнейшей в палеолите?',
+                        answers: ['Ашельская', 'Олдувайская', 'Мустьерская', 'Ориньякская'],
+                        correct: 1
+                    },
+                    {
+                        question: 'Когда человек впервые начал использовать огонь?',
+                        answers: ['Около 500 тыс. лет назад', 'Около 100 тыс. лет назад', 'Около 1.5 млн лет назад', 'Около 50 тыс. лет назад'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Где находятся знаменитые пещерные росписи палеолита?',
+                        answers: ['Египетские пирамиды', 'Мессопотамские зиккураты', 'Альтамира и Шове', 'Греческие храмы'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Чем занимались люди в палеолите?',
+                        answers: ['Земледелием', 'Скотоводством', 'Охотой и собирательством', 'Ремеслом'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Какое орудие было характерно для палеолита?',
+                        answers: ['Бронзовый меч', 'Железный топор', 'Гончарный круг', 'Каменное рубило'],
+                        correct: 3
+                    }
+                ]
+            },
+            'mesolithic': {
+                title: '🏹 Мезолит',
+                questions: [
+                    {
+                        question: 'Что вызвало основные изменения в мезолите?',
+                        answers: ['Извержение вулкана', 'Падение метеорита', 'Таяние ледников', 'Образование пустынь'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Какое важное оружие было изобретено в мезолите?',
+                        answers: ['Железный меч', 'Бронзовый топор', 'Катапульта', 'Лук и стрелы'],
+                        correct: 3
+                    },
+                    {
+                        question: 'Что такое микролиты?',
+                        answers: ['Большие мегалиты', 'Бронзовые украшения', 'Железные наконечники', 'Маленькие каменные орудия'],
+                        correct: 3
+                    },
+                    {
+                        question: 'Какое животное было приручено в мезолите?',
+                        answers: ['Лошадь', 'Корова', 'Кошка', 'Собака'],
+                        correct: 3
+                    },
+                    {
+                        question: 'Чем характеризовался образ жизни в мезолите?',
+                        answers: ['Полная оседлость', 'Кочевой образ жизни', 'Городская жизнь', 'Полуоседлость'],
+                        correct: 3
+                    }
+                ]
+            },
+            'neolithic': {
+                title: '🌾 Неолит',
+                questions: [
+                    {
+                        question: 'Что такое "неолитическая революция"?',
+                        answers: ['Изобретение письменности', 'Создание государств', 'Развитие металлургии', 'Переход к производящему хозяйству'],
+                        correct: 3
+                    },
+                    {
+                        question: 'Какие растения начали выращивать в неолите?',
+                        answers: ['Картофель и томаты', 'Рис и сою', 'Кофе и какао', 'Пшеницу и ячмень'],
+                        correct: 3
+                    },
+                    {
+                        question: 'Где находилось одно из древнейших поселений неолита?',
+                        answers: ['Рим', 'Афины', 'Вавилон', 'Иерихон'],
+                        correct: 3
+                    },
+                    {
+                        question: 'Какое ремесло развилось в неолите?',
+                        answers: ['Металлургия', 'Кораблестроение', 'Архитектура', 'Гончарное дело'],
+                        correct: 3
+                    },
+                    {
+                        question: 'Что такое мегалиты?',
+                        answers: ['Глиняные таблички', 'Бронзовые орудия', 'Железные инструменты', 'Большие каменные сооружения'],
+                        correct: 3
+                    }
+                ]
+            },
+            'bronze-age': {
+                title: '⚔️ Бронзовый век',
+                questions: [
+                    {
+                        question: 'Из каких металлов делали бронзу?',
+                        answers: ['Железа и углерода', 'Серебра и золота', 'Свинца и цинка', 'Меди и олова'],
+                        correct: 3
+                    },
+                    {
+                        question: 'Где возникла первая письменность?',
+                        answers: ['В Египте', 'В Китае', 'В Индии', 'В Месопотамии'],
+                        correct: 3
+                    },
+                    {
+                        question: 'Какая цивилизация построила пирамиды?',
+                        answers: ['Древняя Греция', 'Древний Рим', 'Древний Китай', 'Древний Египет'],
+                        correct: 3
+                    },
+                    {
+                        question: 'Что такое клинопись?',
+                        answers: ['Иероглифическое письмо', 'Алфавитное письмо', 'Пиктографическое письмо', 'Письменность на глиняных табличках'],
+                        correct: 3
+                    },
+                    {
+                        question: 'Кто создал первый свод законов?',
+                        answers: ['Цезарь', 'Александр Македонский', 'Конфуций', 'Хаммурапи'],
+                        correct: 3
+                    }
+                ]
+            },
+            'iron-age': {
+                title: '🛠️ Железный век',
+                questions: [
+                    {
+                        question: 'Какое преимущество имело железо перед бронзой?',
+                        answers: ['Было красивее', 'Легче добывалось', 'Было прочнее и доступнее', 'Лучше проводило тепло'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Какая империя достигла расцвета в железном веке?',
+                        answers: ['Византийская', 'Османская', 'Персидская', 'Британская'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Где были изобретены первые монеты?',
+                        answers: ['В Греции', 'В Риме', 'В Лидии', 'В Китае'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Какое философское учение возникло в железном веке?',
+                        answers: ['Стоицизм', 'Буддизм', 'Конфуцианство', 'Все перечисленные'],
+                        correct: 3
+                    },
+                    {
+                        question: 'Что способствовало развитию торговли в железном веке?',
+                        answers: ['Изобретение компаса', 'Создание дорог', 'Появление денег', 'Все ответы верны'],
+                        correct: 3
+                    }
+                ]
+            },
+            'classical': {
+                title: '🏛️ Античность',
+                questions: [
+                    {
+                        question: 'Кто считается отцом западной философии?',
+                        answers: ['Аристотель', 'Платон', 'Сократ', 'Пифагор'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Какое сооружение было центром общественной жизни в Афинах?',
+                        answers: ['Колизей', 'Парфенон', 'Агора', 'Акрополь'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Кто завоевал Персидскую империю?',
+                        answers: ['Юлий Цезарь', 'Ганнибал', 'Александр Македонский', 'Цезарь Август'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Что такое "Pax Romana"?',
+                        answers: ['Римское право', 'Римский мир', 'Римская армия', 'Римская религия'],
+                        correct: 1
+                    },
+                    {
+                        question: 'Какое изобретение римлян используется до сих пор?',
+                        answers: ['Паровая машина', 'Бетон', 'Порох', 'Компас'],
+                        correct: 1
+                    }
+                ]
+            },
+            'middle-ages': {
+                title: '⚔️ Средневековье',
+                questions: [
+                    {
+                        question: 'Что такое феодализм?',
+                        answers: ['Религиозная система', 'Экономическая система', 'Политическая система', 'Система земельных отношений'],
+                        correct: 3
+                    },
+                    {
+                        question: 'Какой период называют "Темными веками"?',
+                        answers: ['Позднее Средневековье', 'Высокое Средневековье', 'Раннее Средневековье', 'Эпоху Возрождения'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Кто такой Карл Великий?',
+                        answers: ['Римский папа', 'Английский король', 'Франкский император', 'Византийский император'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Что такое "Великая хартия вольностей"?',
+                        answers: ['Религиозный документ', 'Договор о мире', 'Закон о правах', 'Торговое соглашение'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Какая эпидемия опустошила Европу в XIV веке?',
+                        answers: ['Оспа', 'Холера', 'Чума', 'Тиф'],
+                        correct: 2
+                    }
+                ]
+            },
+            'renaissance': {
+                title: '🎨 Возрождение',
+                questions: [
+                    {
+                        question: 'Где началось Возрождение?',
+                        answers: ['Во Франции', 'В Германии', 'В Италии', 'В Англии'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Кто изобрел книгопечатание?',
+                        answers: ['Леонардо да Винчи', 'Иоганн Гутенберг', 'Микеланджело', 'Галилео Галилей'],
+                        correct: 1
+                    },
+                    {
+                        question: 'Что изучали гуманисты?',
+                        answers: ['Естественные науки', 'Античную литературу', 'Теологию', 'Математику'],
+                        correct: 1
+                    },
+                    {
+                        question: 'Кто написал "Божественную комедию"?',
+                        answers: ['Петрарка', 'Боккаччо', 'Данте', 'Шекспир'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Что открыл Коперник?',
+                        answers: ['Америку', 'Гелиоцентрическую систему', 'Закон тяготения', 'Кровообращение'],
+                        correct: 1
+                    }
+                ]
+            },
+            'enlightenment': {
+                title: '💡 Просвещение',
+                questions: [
+                    {
+                        question: 'Кто написал "Общественный договор"?',
+                        answers: ['Вольтер', 'Монтескье', 'Руссо', 'Локк'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Что такое "Энциклопедия"?',
+                        answers: ['Научный журнал', 'Сборник законов', 'Свод знаний', 'Философский трактат'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Кто открыл закон всемирного тяготения?',
+                        answers: ['Галилей', 'Кеплер', 'Ньютон', 'Лейбниц'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Что пропагандировали просветители?',
+                        answers: ['Абсолютизм', 'Разум и свободу', 'Традиции', 'Религиозность'],
+                        correct: 1
+                    },
+                    {
+                        question: 'Какая страна стала центром Просвещения?',
+                        answers: ['Англия', 'Германия', 'Франция', 'Италия'],
+                        correct: 2
+                    }
+                ]
+            },
+            'industrial': {
+                title: '🏭 Индустриальная эра',
+                questions: [
+                    {
+                        question: 'Где началась промышленная революция?',
+                        answers: ['В США', 'В Германии', 'В Великобритании', 'Во Франции'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Что изобрел Джеймс Уатт?',
+                        answers: ['Прядильную машину', 'Паровоз', 'Усовершенствованную паровую машину', 'Телеграф'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Что такое урбанизация?',
+                        answers: ['Развитие промышленности', 'Рост городов', 'Механизация сельского хозяйства', 'Развитие транспорта'],
+                        correct: 1
+                    },
+                    {
+                        question: 'Кто изобрел телефон?',
+                        answers: ['Эдисон', 'Белл', 'Морзе', 'Тесла'],
+                        correct: 1
+                    },
+                    {
+                        question: 'Что способствовало развитию железных дорог?',
+                        answers: ['Изобретение автомобиля', 'Развитие торговли', 'Паровая машина', 'Электричество'],
+                        correct: 2
+                    }
+                ]
+            },
+            'modern-era': {
+                title: '🚀 Современность',
+                questions: [
+                    {
+                        question: 'Кто разработал теорию относительности?',
+                        answers: ['Нильс Бор', 'Макс Планк', 'Альберт Эйнштейн', 'Вернер Гейзенберг'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Когда человек впервые полетел в космос?',
+                        answers: ['1957', '1961', '1969', '1955'],
+                        correct: 1
+                    },
+                    {
+                        question: 'Что такое "холодная война"?',
+                        answers: ['Мировая война', 'Гражданская война', 'Противостояние СССР и США', 'Экономический кризис'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Кто был первым президентом США?',
+                        answers: ['Авраам Линкольн', 'Томас Джефферсон', 'Джордж Вашингтон', 'Бенджамин Франклин'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Что такое глобализация?',
+                        answers: ['Экономический кризис', 'Объединение мира', 'Технический прогресс', 'Культурный обмен'],
+                        correct: 1
+                    }
+                ]
+            },
+            'contemporary': {
+                title: '🌐 Современность',
+                questions: [
+                    {
+                        question: 'Что такое искусственный интеллект?',
+                        answers: ['Робототехника', 'Компьютерные игры', 'Машинное обучение', 'Все перечисленное'],
+                        correct: 3
+                    },
+                    {
+                        question: 'Какая проблема является глобальной в XXI веке?',
+                        answers: ['Нехватка воды', 'Изменение климата', 'Загрязнение океана', 'Все перечисленные'],
+                        correct: 3
+                    },
+                    {
+                        question: 'Что такое CRISPR?',
+                        answers: ['Новый вид энергии', 'Метод редактирования генов', 'Тип процессора', 'Социальная сеть'],
+                        correct: 1
+                    },
+                    {
+                        question: 'Какая компания создала iPhone?',
+                        answers: ['Samsung', 'Google', 'Apple', 'Microsoft'],
+                        correct: 2
+                    },
+                    {
+                        question: 'Что такое "интернет вещей"?',
+                        answers: ['Социальные сети', 'Облачные технологии', 'Подключенные устройства', 'Искусственный интеллект'],
+                        correct: 2
+                    }
+                ]
+            }
+        };
+
+        // Переменные для викторины
+        let currentQuiz = null;
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let answered = false;
+
+        // Функции викторины
+        function openQuiz(era) {
+            currentQuiz = quizzes[era];
+            if (!currentQuiz) return;
+            
+            currentQuestionIndex = 0;
+            score = 0;
+            answered = false;
+            
+            document.getElementById('quizEraTitle').textContent = currentQuiz.title;
+            document.getElementById('quizModal').style.display = 'flex';
+            showQuestion();
+        }
+
+        function closeQuiz() {
+            document.getElementById('quizModal').style.display = 'none';
+        }
+
+        function showQuestion() {
+            if (!currentQuiz) return;
+            
+            const question = currentQuiz.questions[currentQuestionIndex];
+            const quizContainer = document.getElementById('quizQuestions');
+            
+            quizContainer.innerHTML = `
+                <div class="question">
+                    <div class="question-text">${question.question}</div>
+                    <div class="answers">
+                        ${question.answers.map((answer, index) => `
+                            <button class="answer-btn" onclick="checkAnswer(${index})">
+                                ${answer}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('quizProgress').textContent = 
+                `Вопрос ${currentQuestionIndex + 1} из ${currentQuiz.questions.length}`;
+            
+            answered = false;
+        }
+
+        function checkAnswer(selectedIndex) {
+            if (answered) return;
+            answered = true;
+            
+            const question = currentQuiz.questions[currentQuestionIndex];
+            const answerButtons = document.querySelectorAll('.answer-btn');
+            
+            answerButtons.forEach((btn, index) => {
+                if (index === question.correct) {
+                    btn.classList.add('correct');
+                } else if (index === selectedIndex) {
+                    btn.classList.add('incorrect');
+                }
+                btn.style.pointerEvents = 'none';
+            });
+            
+            if (selectedIndex === question.correct) {
+                score++;
+            }
+            
+            setTimeout(() => {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < currentQuiz.questions.length) {
+                    showQuestion();
+                } else {
+                    showResults();
+                }
+            }, 2000);
+        }
+
+        function showResults() {
+            const quizContainer = document.getElementById('quizQuestions');
+            const percentage = Math.round((score / currentQuiz.questions.length) * 100);
+            
+            quizContainer.innerHTML = `
+                <div class="quiz-result">
+                    <h2 class="result-title">Результаты викторины</h2>
+                    <div class="result-score">${score}/${currentQuiz.questions.length}</div>
+                    <div style="font-size: 1.2rem; margin: 1rem 0;">
+                        Правильных ответов: ${percentage}%
+                    </div>
+                    <p style="color: #666; margin: 1rem 0;">
+                        ${getResultMessage(percentage)}
+                    </p>
+                    <button class="restart-quiz" onclick="openQuiz('${Object.keys(quizzes).find(key => quizzes[key] === currentQuiz)}')">
+                        <i class="fas fa-redo"></i> Пройти еще раз
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('quizProgress').style.display = 'none';
+        }
+
+        function getResultMessage(percentage) {
+            if (percentage >= 90) return 'Отлично! Вы настоящий эксперт по этой эпохе! 🎉';
+            if (percentage >= 70) return 'Хорошо! Вы хорошо знаете этот исторический период! 👍';
+            if (percentage >= 50) return 'Неплохо! Есть что повторить 📚';
+            return 'Попробуйте еще раз и изучите материалы внимательнее! 💪';
+        }
+
+        // Основной функционал
+        document.addEventListener('DOMContentLoaded', function() {
+            const eraContents = document.querySelectorAll('.era-content');
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            const progressBar = document.getElementById('progressBar');
+            const navDots = document.querySelectorAll('.nav-dot');
+            
+            // Раскрытие/скрытие деталей эпохи
+            eraContents.forEach(content => {
+                content.addEventListener('click', function(e) {
+                    // Игнорируем клики по кнопкам и карусели
+                    if (e.target.closest('.quiz-btn') || e.target.closest('.photo-carousel')) return;
+                    
+                    this.classList.toggle('expanded');
+                    
+                    eraContents.forEach(otherContent => {
+                        if (otherContent !== this && otherContent.classList.contains('expanded')) {
+                            otherContent.classList.remove('expanded');
+                        }
+                    });
+                });
+            });
+            
+            // Фильтрация эпох
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const era = this.getAttribute('data-era');
+                    
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    eraContents.forEach(content => {
+                        const eraContainer = content.closest('.era-container');
+                        if (era === 'all' || eraContainer.classList.contains(era)) {
+                            eraContainer.classList.remove('hidden');
+                        } else {
+                            eraContainer.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+            
+            // Прогресс-бар при скролле
+            window.addEventListener('scroll', function() {
+                const windowHeight = window.innerHeight;
+                const documentHeight = document.documentElement.scrollHeight;
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                
+                const scrollPercent = (scrollTop / (documentHeight - windowHeight)) * 100;
+                progressBar.style.width = scrollPercent + '%';
+                
+                updateNavDots();
+            });
+            
+            // Инициализация прогресс-баров технологий
+            setTimeout(() => {
+                document.querySelectorAll('.tech-level').forEach(bar => {
+                    const width = bar.style.width;
+                    bar.style.width = '0%';
+                    setTimeout(() => {
+                        bar.style.width = width;
+                    }, 500);
+                });
+            }, 1000);
+
+            // Инициализация каруселей
+            initCarousels();
+        });
+
+        function scrollToEra(eraId) {
+            const element = document.getElementById(eraId);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function updateNavDots() {
+            const scrollPosition = window.scrollY + window.innerHeight / 2;
+            
+            navDots.forEach(dot => {
+                dot.classList.remove('active');
+            });
+            
+            // Простая логика активации точек
+            const eras = ['paleolithic', 'classical', 'middle-ages', 'renaissance', 'contemporary'];
+            const eraElements = eras.map(id => document.getElementById(id));
+            
+            eraElements.forEach((era, index) => {
+                if (era) {
+                    const rect = era.getBoundingClientRect();
+                    if (rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2) {
+                        navDots[index].classList.add('active');
+                    }
+                }
+            });
+        }
+
+        // Функции для карусели
+        function initCarousels() {
+            document.querySelectorAll('.photo-carousel').forEach(carousel => {
+                const track = carousel.querySelector('.carousel-track');
+                const slides = carousel.querySelectorAll('.carousel-slide');
+                const prevBtn = carousel.querySelector('.carousel-prev');
+                const nextBtn = carousel.querySelector('.carousel-next');
+                const dotsContainer = carousel.querySelector('.carousel-dots');
+                
+                let currentSlide = 0;
+                
+                // Создаем точки
+                slides.forEach((_, index) => {
+                    const dot = document.createElement('button');
+                    dot.className = 'carousel-dot';
+                    if (index === 0) dot.classList.add('active');
+                    dot.addEventListener('click', () => goToSlide(index));
+                    dotsContainer.appendChild(dot);
+                });
+                
+                function updateCarousel() {
+                    track.style.transform = `translateX(-${currentSlide * 100}%)`;
+                    
+                    // Обновляем точки
+                    carousel.querySelectorAll('.carousel-dot').forEach((dot, index) => {
+                        dot.classList.toggle('active', index === currentSlide);
+                    });
+                }
+                
+                function goToSlide(index) {
+                    currentSlide = index;
+                    updateCarousel();
+                }
+                
+                function nextSlide() {
+                    currentSlide = (currentSlide + 1) % slides.length;
+                    updateCarousel();
+                }
+                
+                function prevSlide() {
+                    currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+                    updateCarousel();
+                }
+                
+                prevBtn.addEventListener('click', prevSlide);
+                nextBtn.addEventListener('click', nextSlide);
+                
+                // Автопрокрутка
+                setInterval(nextSlide, 5000);
+            });
+        }
+
+        // Закрытие модального окна
+        document.getElementById('quizModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeQuiz();
+            }
+        });
+    </script>
+</body>
+</html>
